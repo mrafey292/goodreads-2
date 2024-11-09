@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "416271652357",
+    "project_id": "goodreads-2-a3536",
+    "storage_bucket": "goodreads-2-a3536.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:416271652357:android:c25c9444f6c1f65c98ae6c",
+        "android_client_info": {
+          "package_name": "com.example.goodreads2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIIvvHEum6cDV0IRXqul22uwVnvde0lBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
