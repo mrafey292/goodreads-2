@@ -1,5 +1,7 @@
 package com.example.goodreads2;
 
+import android.app.AlertDialog;
+import android.content.Context;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
@@ -19,6 +21,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
@@ -30,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class BookDetailsFragment extends Fragment {
 
@@ -164,8 +168,9 @@ public class BookDetailsFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     addBookToBooks(book);
-                    addBookToList("Want to Read", book.getBookID());
+                    addBookToWantToReadList(book.getBookID(),book.getTitle());
                     removeFromRecommendations();
+                    updateWantToReadButton(true, false);
                     wantToReadButton.setEnabled(false);
                     wantToReadButton.setText("Want to Read ✔");
                     wantToReadButton.setBackgroundColor(getResources().getColor(R.color.background));
@@ -175,29 +180,7 @@ public class BookDetailsFragment extends Fragment {
             readButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    addBookToBooks(book);
-                    addBookToList("Read", book.getBookID());
-//                    if (book.getBookID() != null){
-//                        addBookToList("Read", book.getBookID());
-//                    }
-//                    else {
-//                        addBookToList("Read", bookId);
-//                    }
-                    readButton.setEnabled(false);
-                    wantToReadButton.setEnabled(false);
-                    currentlyReadingButton.setEnabled(false);
-                    readButton.setText("Read ✔");
-                    readButton.setBackgroundColor(getResources().getColor(R.color.background));
-                    wantToReadButton.setBackgroundColor(getResources().getColor(R.color.background));
-                    currentlyReadingButton.setBackgroundColor(getResources().getColor(R.color.background));
-
-                    ratingBar.setVisibility(View.VISIBLE);
-                    addReviewButton.setVisibility(View.VISIBLE);
-                    submitRatingButton.setVisibility(View.VISIBLE);
-
-                    removeBookFromList("Want to Read", book.getBookID());
-                    removeBookFromList("Currently Reading", book.getBookID());
-                    removeFromRecommendations();
+                    showRatingDialog(book);
                 }
             });
 
@@ -217,7 +200,7 @@ public class BookDetailsFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     addBookToBooks(book);
-                    addBookToList("Currently Reading", book.getBookID());
+                    addbookToCurrentlyReadingList(book.getBookID(), book.getTitle());
                     currentlyReadingButton.setEnabled(false);
                     wantToReadButton.setEnabled(false);
                     currentlyReadingButton.setText("Currently Reading ✔");
@@ -266,6 +249,40 @@ public class BookDetailsFragment extends Fragment {
         }
         return view;
     }
+
+    private void showRatingDialog(Book book) {
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        View dialogView = inflater.inflate(R.layout.rating_dialog, null);
+        RatingBar ratingBar = dialogView.findViewById(R.id.rating_bar);
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext()); // Use requireContext() or getActivity()
+        builder.setView(dialogView)
+                .setPositiveButton("Add", (dialog, which) -> {
+                    // Handle "Add" button click
+                    float rating = ratingBar.getRating();
+                    addToAlreadyReadBooks(book,rating);
+                    saveRating(book.getBookID(), mAuth.getUid(), rating);
+                    addBookToBooks(book);
+                    readButton.setEnabled(false);
+                    wantToReadButton.setEnabled(false);
+                    currentlyReadingButton.setEnabled(false);
+                    readButton.setText("Read ✔");
+                    readButton.setBackgroundColor(getResources().getColor(R.color.background));
+                    wantToReadButton.setBackgroundColor(getResources().getColor(R.color.background));
+                    currentlyReadingButton.setBackgroundColor(getResources().getColor(R.color.background));
+                    removeBookFromList("Want to Read", book.getBookID());
+                    removeBookFromList("Currently Reading", book.getBookID());
+                    removeFromRecommendations();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                });
+
+        // Show the dialog
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+
 
     public interface OnCheckBookInListListener {
         void onCheckBookInList(boolean exists);
@@ -355,36 +372,99 @@ public class BookDetailsFragment extends Fragment {
         });
     }
 
-    private void addBookToList(String listName, String bookId) {
-        db.collection("lists")
-                .whereEqualTo("userID", mAuth.getUid())
-                .whereEqualTo("name", listName)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        if (!task.getResult().isEmpty()) {
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                DocumentReference listRef = document.getReference();
-                                listRef.update("books", FieldValue.arrayUnion(bookId))
-                                        .addOnSuccessListener(aVoid -> {
-                                            Toast.makeText(getContext(), "Book added to " + listName + " list", Toast.LENGTH_SHORT).show();
-                                            if (listName.equals("Want to Read")) {
-                                                updateWantToReadButton(true, false);
-                                            }
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            Toast.makeText(getContext(), "Failed to add book to " + listName + " list", Toast.LENGTH_SHORT).show();
-                                            Log.w("BookDetailsFragment", "Error updating document", e);
-                                        });
-                            }
-                        } else {
-                            Toast.makeText(getContext(), listName + " list not found for user", Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Log.d("BookDetailsFragment", "Error getting documents: ", task.getException());
-                    }
+    private void addbookToCurrentlyReadingList(String bookId,String bookName){
+        String userId=mAuth.getUid();
+        if (userId==null){
+            Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+            Log.e("BookDetailsFragment", "User ID is null. User not authenticated.");
+            return;
+        }
+        CollectionReference currentlyReadingCollection=db.collection("lists").document(userId).collection("currently_reading");
+        Map<String, Object> book=new HashMap<>();
+        book.put("bookId",bookId);
+        book.put("bookName",bookName);
+        currentlyReadingCollection.add(book)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d("BookDetailsFragment", "Book added with ID: " + documentReference.getId());
+                    Toast.makeText(getContext(), "Book added to 'Currently Reading' list", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("BookDetailsFragment", "Error adding book: " + e.getMessage(), e);
+                    Toast.makeText(getContext(), "Failed to add book: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }).addOnCompleteListener(task -> {
+            Log.d("BookDetailsFragment", "Book added to 'Currently Reading' list");
+        });
+    }
+
+    private void addBookToWantToReadList(String bookId, String bookName) {
+        String userId = mAuth.getUid();
+        if (userId == null) {
+            Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+            Log.e("BookDetailsFragment", "User ID is null. User not authenticated.");
+            return;
+        }
+
+        // Reference to the user's "want_to_read" collection
+        CollectionReference wantToReadCollection = db.collection("lists").document(userId).collection("want_to_read");
+        Log.d("BookDetailsFragment", "Collection Reference: " + wantToReadCollection.getPath());
+
+        // Create a book object
+        Map<String, Object> book = new HashMap<>();
+        book.put("bookId", bookId);
+        book.put("bookName", bookName);
+
+        Log.d("BookDetailsFragment", "Book ID: " + bookId);
+
+        wantToReadCollection.add(book)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d("BookDetailsFragment", "Book added with ID: " + documentReference.getId());
+                    Toast.makeText(getContext(), "Book added to 'Want to Read' list", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("BookDetailsFragment", "Error adding book: " + e.getMessage(), e);
+                    Toast.makeText(getContext(), "Failed to add book: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }).addOnCompleteListener(task -> {
+                        Log.d("BookDetailsFragment", "Book added to 'Want to Read' list");
+
                 });
     }
+
+        private void addToAlreadyReadBooks(Book book,float rating) {
+        String userId = mAuth.getUid();
+        if (userId == null) {
+            Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+            Log.e("BookDetailsFragment", "User ID is null. User not authenticated.");
+            return;
+        }
+
+        // Reference to the user's "already_read" collection
+        CollectionReference alreadyReadCollection = db.collection("lists").document(userId).collection("already_read");
+        Log.d("BookDetailsFragment", "Collection Reference: " + alreadyReadCollection.getPath());
+
+        // Create a book object
+        Map<String, Object> bookMap = new HashMap<>();
+        bookMap.put("bookId", book.getBookID());
+        bookMap.put("bookName", book.getTitle());
+        bookMap.put("rating", rating);
+
+        Log.d("BookDetailsFragment", "Book ID: " + book.getBookID());
+        alreadyReadCollection.add(bookMap)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d("BookDetailsFragment", "Book added with ID: " + documentReference.getId());
+                    Toast.makeText(getContext(), "Book added to 'Already Read' list", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("BookDetailsFragment", "Error adding book: " + e.getMessage(), e);
+                    Toast.makeText(getContext(), "Failed to add book: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }).addOnCompleteListener(task -> {
+            Log.d("BookDetailsFragment", "Book added to 'Already Read' list");
+
+        });
+    }
+
+
+
+
 
     private void updateWantToReadButton(boolean inWantToReadList, boolean inReadList) {
         if (inReadList) {

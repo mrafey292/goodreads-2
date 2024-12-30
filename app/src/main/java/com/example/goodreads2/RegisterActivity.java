@@ -3,6 +3,7 @@ package com.example.goodreads2;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -122,6 +123,7 @@ public class RegisterActivity extends AppCompatActivity {
                                             });
                                 } else {
                                     progressBar.setVisibility(View.GONE);
+                                    Log.e("RegisterActivity", "Registration failed: " + task.getException().getMessage());
                                     Toast.makeText(RegisterActivity.this, "Registration failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                                 }
                             }
