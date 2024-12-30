@@ -65,7 +65,7 @@ public class SearchFragment extends Fragment {
 
         // Initialize RequestQueue here
         requestQueue = Volley.newRequestQueue(requireContext());
-        String url = "https://www.googleapis.com/books/v1/volumes?q=" + query;
+        String url = "https://www.googleapis.com/books/v1/volumes?q=" + query + "&key=AIzaSyCsT1_PV6QYc-35ZJBOONOjARRloXLEXAA";
 
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
