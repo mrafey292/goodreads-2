@@ -446,6 +446,7 @@ public class BookDetailsFragment extends Fragment {
         bookMap.put("bookId", book.getBookID());
         bookMap.put("bookName", book.getTitle());
         bookMap.put("rating", rating);
+        bookMap.put("timestamp", FieldValue.serverTimestamp());
 
         Log.d("BookDetailsFragment", "Book ID: " + book.getBookID());
         alreadyReadCollection.add(bookMap)
