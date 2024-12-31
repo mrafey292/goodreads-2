@@ -254,114 +254,129 @@ public class LibraryFragment extends Fragment implements BookAdapter.OnBookClick
 
         // Load books for the "Read" list
         db.collection("lists")
-                .whereEqualTo("userID", userId)
-                .whereEqualTo("name", "Read")
+                .document(userId)
+                .collection("already_read")
                 .get().addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            List<String> bookIds = (List<String>) document.get("books");
-                            if (bookIds != null) {
-                                for (String bookId : bookIds) {
-                                    if (bookId != null) {  // Ensure bookId is not null
-                                        db.collection("books").document(bookId)
-                                                .get().addOnSuccessListener(bookDoc -> {
-                                                    if (bookDoc.exists()) {
-                                                        String title = bookDoc.getString("title");
-                                                        String author = bookDoc.getString("author");
-                                                        String description = bookDoc.getString("description");
-                                                        String coverURL = bookDoc.getString("coverImageUrl");
-                                                        String isbn10 = bookDoc.getString("isbn10");
-                                                        String isbn13 = bookDoc.getString("isbn13");
-                                                        ArrayList<String> categories = (ArrayList<String>) bookDoc.get("categories");
+                            // Directly retrieve book details from each document
+                            String bookId = document.getString("bookId");
+                            String bookName = document.getString("bookName");
+                            Double rating = document.getDouble("rating");
 
-                                                        Book book = new Book(bookId, coverURL, title, author, description, isbn10, isbn13, categories);
-                                                        readList.add(book);
-                                                        readAdapter.notifyDataSetChanged();
-                                                    }
-                                                });
-                                    } else {
-                                        // Log or handle the null bookId case
-                                        Log.w("LibraryFragment", "Null bookId encountered in 'Read' list.");
-                                    }
-                                }
+                            if (bookId != null) {  // Ensure bookId is not null
+                                // Fetch additional details for the book if needed
+                                db.collection("books").document(bookId)
+                                        .get().addOnSuccessListener(bookDoc -> {
+                                            if (bookDoc.exists()) {
+                                                String title = bookDoc.getString("title");
+                                                String author = bookDoc.getString("author");
+                                                String description = bookDoc.getString("description");
+                                                String coverURL = bookDoc.getString("coverImageUrl");
+                                                String isbn10 = bookDoc.getString("isbn10");
+                                                String isbn13 = bookDoc.getString("isbn13");
+                                                ArrayList<String> categories = (ArrayList<String>) bookDoc.get("categories");
+
+                                                // Create a Book object with the fetched details
+                                                Book book = new Book(bookId, coverURL, title, author, description, isbn10, isbn13, categories);
+                                                readList.add(book);
+                                                readAdapter.notifyDataSetChanged();
+                                            }
+                                        });
+                            } else {
+                                // Handle the case where bookId is null
+                                Log.w("LibraryFragment", "Null bookId encountered in 'already_read' collection.");
                             }
                         }
+                    } else {
+                        Log.e("LibraryFragment", "Failed to fetch 'already_read' collection.", task.getException());
                     }
                 });
+
 
         // Load books for the "Currently Reading" list
         db.collection("lists")
-                .whereEqualTo("userID", userId)
-                .whereEqualTo("name", "Currently Reading")
+                .document(userId)
+                .collection("currently_reading")
                 .get().addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            List<String> bookIds = (List<String>) document.get("books");
-                            if (bookIds != null) {
-                                for (String bookId : bookIds) {
-                                    if (bookId != null) {  // Ensure bookId is not null
-                                        db.collection("books").document(bookId)
-                                                .get().addOnSuccessListener(bookDoc -> {
-                                                    if (bookDoc.exists()) {
-                                                        String title = bookDoc.getString("title");
-                                                        String author = bookDoc.getString("author");
-                                                        String description = bookDoc.getString("description");
-                                                        String coverURL = bookDoc.getString("coverImageUrl");
-                                                        String isbn10 = bookDoc.getString("isbn10");
-                                                        String isbn13 = bookDoc.getString("isbn13");
-                                                        ArrayList<String> categories = (ArrayList<String>) bookDoc.get("categories");
+                            // Directly retrieve book details from each document
+                            String bookId = document.getString("bookId");
+                            String bookName = document.getString("bookName");
 
-                                                        Book book = new Book(bookId, coverURL, title, author, description, isbn10, isbn13, categories);
-                                                        currentlyReadingList.add(book);
-                                                        currentlyReadingAdapter.notifyDataSetChanged();
-                                                    }
-                                                });
-                                    } else {
-                                        // Log or handle the null bookId case
-                                        Log.w("LibraryFragment", "Null bookId encountered in 'Currently Reading' list.");
-                                    }
-                                }
+                            if (bookId != null) {  // Ensure bookId is not null
+                                // Fetch additional details for the book if needed
+                                db.collection("books").document(bookId)
+                                        .get().addOnSuccessListener(bookDoc -> {
+                                            if (bookDoc.exists()) {
+                                                String title = bookDoc.getString("title");
+                                                String author = bookDoc.getString("author");
+                                                String description = bookDoc.getString("description");
+                                                String coverURL = bookDoc.getString("coverImageUrl");
+                                                String isbn10 = bookDoc.getString("isbn10");
+                                                String isbn13 = bookDoc.getString("isbn13");
+                                                ArrayList<String> categories = (ArrayList<String>) bookDoc.get("categories");
+
+                                                // Create a Book object with the fetched details
+                                                Book book = new Book(bookId, coverURL, title, author, description, isbn10, isbn13, categories);
+                                                currentlyReadingList.add(book);
+                                                currentlyReadingAdapter.notifyDataSetChanged();
+                                            }
+                                        });
+                            } else {
+                                // Handle the case where bookId is null
+                                Log.w("LibraryFragment", "Null bookId encountered in 'currently_reading' collection.");
                             }
                         }
+                    } else {
+                        Log.e("LibraryFragment", "Failed to fetch 'currently_reading' collection.", task.getException());
                     }
                 });
+
 
         // Load books for the "Want to Read" list
         db.collection("lists")
-                .whereEqualTo("userID", userId)
-                .whereEqualTo("name", "Want to Read")
+                .document(userId)
+                .collection("want_to_read")
                 .get().addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            List<String> bookIds = (List<String>) document.get("books");
-                            if (bookIds != null) {
-                                for (String bookId : bookIds) {
-                                    if (bookId != null) {  // Ensure bookId is not null
-                                        db.collection("books").document(bookId)
-                                                .get().addOnSuccessListener(bookDoc -> {
-                                                    if (bookDoc.exists()) {
-                                                        String title = bookDoc.getString("title");
-                                                        String author = bookDoc.getString("author");
-                                                        String description = bookDoc.getString("description");
-                                                        String coverURL = bookDoc.getString("coverImageUrl");
-                                                        String isbn10 = bookDoc.getString("isbn10");
-                                                        String isbn13 = bookDoc.getString("isbn13");
-                                                        ArrayList<String> categories = (ArrayList<String>) bookDoc.get("categories");
+                            // Directly retrieve book details from each document
+                            String bookId = document.getString("bookId");
+                            String bookName = document.getString("bookName");
+                            Double rating = document.getDouble("rating");
 
-                                                        Book book = new Book(bookId, coverURL, title, author, description, isbn10, isbn13, categories);
-                                                        wantToReadList.add(book);
-                                                        wantToReadAdapter.notifyDataSetChanged();
-                                                    }
-                                                });
-                                    } else {
-                                        // Log or handle the null bookId case
-                                        Log.w("LibraryFragment", "Null bookId encountered in 'Want to Read' list.");
-                                    }
-                                }
+                            if (bookId != null) {  // Ensure bookId is not null
+                                // Fetch additional details for the book if needed
+                                db.collection("books").document(bookId)
+                                        .get().addOnSuccessListener(bookDoc -> {
+                                            if (bookDoc.exists()) {
+                                                String title = bookDoc.getString("title");
+                                                String author = bookDoc.getString("author");
+                                                String description = bookDoc.getString("description");
+                                                String coverURL = bookDoc.getString("coverImageUrl");
+                                                String isbn10 = bookDoc.getString("isbn10");
+                                                String isbn13 = bookDoc.getString("isbn13");
+                                                ArrayList<String> categories = (ArrayList<String>) bookDoc.get("categories");
+
+                                                // Create a Book object with the fetched details
+                                                Book book = new Book(bookId, coverURL, title, author, description, isbn10, isbn13, categories);
+
+                                                wantToReadList.add(book);
+                                                wantToReadAdapter.notifyDataSetChanged();
+                                            }
+                                        });
+                            } else {
+                                // Handle the case where bookId is null
+                                Log.w("LibraryFragment", "Null bookId encountered in 'want_to_read' collection.");
                             }
                         }
+                    } else {
+                        Log.e("LibraryFragment", "Failed to fetch 'want_to_read' collection.", task.getException());
                     }
                 });
+
     }
     @Override
     public void onBookClick(int position, List<Book> bookList) {
