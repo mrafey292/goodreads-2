@@ -1,6 +1,7 @@
 // SearchAdapter.java
 package com.example.goodreads2;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +17,7 @@ import java.util.List;
 
 public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchViewHolder> {
 
-    private List<Book> bookList;
+    private List<Book>  bookList;
     private OnItemClickListener listener; // Interface to handle item click events
 
     public interface OnItemClickListener {
@@ -37,12 +38,16 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchView
 
     @Override
     public void onBindViewHolder(@NonNull SearchViewHolder holder, int position) {
+        Log.d("SearchAdapter", "Binding view holder at position: " + position);
+        Log.d("SearchAdapter", "Book list size: " + bookList.size());
         Book book = bookList.get(position);
+
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (listener != null) {
+                    Log.d("SearchAdapter", "Book selected: " + book.getBookID());
                     listener.onItemClick(book);
                 }
             }

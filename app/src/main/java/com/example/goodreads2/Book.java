@@ -27,15 +27,6 @@ public class Book {
         this.categories = categories;
         this.bookID = bookID;
     }
-    public Book(String coverURL, String title, String authors, String description, String isbn10, String isbn13, ArrayList<String> categories) {
-        this.coverURL = coverURL;
-        this.title = title;
-        this.authors = authors;
-        this.description = description;
-        this.isbn10 = isbn10;
-        this.isbn13 = isbn13;
-        this.categories = categories;
-    }
 
     // Getters and Setters
     public String getCoverURL() {

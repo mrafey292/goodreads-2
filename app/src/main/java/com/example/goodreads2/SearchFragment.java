@@ -1,6 +1,7 @@
 package com.example.goodreads2;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,6 +50,7 @@ public class SearchFragment extends Fragment {
         searchAdapter = new SearchAdapter(bookList, new SearchAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Book book) {
+                Log.d("SearchFragment", "Book selected: " + book.getBookID());
                 // Navigate to BookDetailsFragment and pass selected book details
                 FragmentManager fragmentManager = getParentFragmentManager();
                 FragmentTransaction transaction = fragmentManager.beginTransaction();
@@ -75,6 +77,7 @@ public class SearchFragment extends Fragment {
                                 JSONObject volumeInfo = item.getJSONObject("volumeInfo");
 
                                 String title = volumeInfo.optString("title");
+                                String bookId = item.optString("id");
                                 String authors = volumeInfo.optJSONArray("authors") != null ? volumeInfo.optJSONArray("authors").join(", ") : "Unknown Author";
                                 String description = volumeInfo.optString("description", "No description available");
 
@@ -117,8 +120,8 @@ public class SearchFragment extends Fragment {
                                         }
                                     }
                                 }
-
-                                bookList.add(new Book(coverURL, title, authors, description, isbn10, isbn13, genres));
+                                Log.d("SearchFragment", "Adding book: " + bookId);
+                                bookList.add(new Book(bookId,coverURL, title, authors, description, isbn10, isbn13, genres));
                             }
                             searchAdapter.notifyDataSetChanged();
                         } catch (JSONException e) {

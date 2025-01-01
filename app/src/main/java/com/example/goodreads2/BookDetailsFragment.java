@@ -63,6 +63,7 @@ public class BookDetailsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_book_details, container, false);
 
         // Find views by their IDs
+        Log.d("BookDetailsFragment", "Book ID: " + book.getBookID());
         ImageView coverImageView = view.findViewById(R.id.image_view_cover);
         TextView titleTextView = view.findViewById(R.id.text_view_title);
         TextView authorsTextView = view.findViewById(R.id.text_view_authors);
@@ -116,7 +117,7 @@ public class BookDetailsFragment extends Fragment {
 //            addBookToBooks(book);
 
 
-            checkBookInList("Want to Read", book.getBookID(), existsInList -> {
+            checkBookInList("want_to_read", book.getBookID(), existsInList -> {
                 if (existsInList) {
                     Log.d("Want to Read", "TRUE for Want to Read "+book.getBookID());
                     wantToReadButton.setEnabled(false);
@@ -128,7 +129,7 @@ public class BookDetailsFragment extends Fragment {
                 }
             });
 
-            checkBookInList("Currently Reading", book.getBookID(), existsInList -> {
+            checkBookInList("currently_reading", book.getBookID(), existsInList -> {
                 if (existsInList) {
                     Log.d("Currently Reading", "TRUE for Currently Reading "+book.getBookID());
                     currentlyReadingButton.setEnabled(false);
@@ -142,7 +143,7 @@ public class BookDetailsFragment extends Fragment {
                 }
             });
 
-            checkBookInList("Read", book.getBookID(), existsInList -> {
+            checkBookInList("already_read", book.getBookID(), existsInList -> {
                 if (existsInList) {
                     Log.d("Read", "TRUE for Read "+book.getBookID());
                     readButton.setEnabled(false);
@@ -206,7 +207,7 @@ public class BookDetailsFragment extends Fragment {
                     currentlyReadingButton.setText("Currently Reading ✔");
                     wantToReadButton.setBackgroundColor(getResources().getColor(R.color.background));
                     currentlyReadingButton.setBackgroundColor(getResources().getColor(R.color.background));
-                    removeBookFromList("Want to Read", book.getBookID());
+                    removeBookFromList("want_to_read", book.getBookID());
                     removeFromRecommendations();
                 }
             });
@@ -222,9 +223,9 @@ public class BookDetailsFragment extends Fragment {
             clearButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    removeBookFromList("Read", book.getBookID());
-                    removeBookFromList("Want to Read", book.getBookID());
-                    removeBookFromList("Currently Reading", book.getBookID());
+                    removeBookFromList("already_read", book.getBookID());
+                    removeBookFromList("want_to_read", book.getBookID());
+                    removeBookFromList("currently_reading", book.getBookID());
 
                     removeFromRecommendations();
 
@@ -269,8 +270,8 @@ public class BookDetailsFragment extends Fragment {
                     readButton.setBackgroundColor(getResources().getColor(R.color.background));
                     wantToReadButton.setBackgroundColor(getResources().getColor(R.color.background));
                     currentlyReadingButton.setBackgroundColor(getResources().getColor(R.color.background));
-                    removeBookFromList("Want to Read", book.getBookID());
-                    removeBookFromList("Currently Reading", book.getBookID());
+                    removeBookFromList("want_to_read", book.getBookID());
+                    removeBookFromList("currently_reading", book.getBookID());
                     removeFromRecommendations();
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> {
@@ -292,32 +293,6 @@ public class BookDetailsFragment extends Fragment {
         void onCheckExistingBook(boolean exists);
     }
 
-    private void checkBookInList(String listName, String bookId, OnCheckBookInListListener listener) {
-        db.collection("lists")
-                .whereEqualTo("userID", mAuth.getUid())
-                .whereEqualTo("name", listName)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        if (!task.getResult().isEmpty()) {
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                ArrayList<String> books = (ArrayList<String>) document.get("books");
-                                if (books != null && books.contains(bookId)) {
-                                    listener.onCheckBookInList(true);
-                                    Log.d("checkBookInList", "True for "+bookId+" in "+document.getId());
-                                    return;
-                                }
-                            }
-                        }
-                        listener.onCheckBookInList(false);
-                        Log.d("HE", "False for "+bookId);
-
-                    } else {
-                        listener.onCheckBookInList(false);
-                        Log.d("HE", "False");
-                    }
-                });
-    }
 
     private void checkExistingBook(Book book, OnCheckExistingBookListener listener) {
         db.collection("books")
@@ -325,9 +300,6 @@ public class BookDetailsFragment extends Fragment {
                 .whereEqualTo("author", book.getAuthors())
                 .whereEqualTo("coverImageUrl", book.getCoverURL())
                 .whereEqualTo("description", book.getDescription())
-//                .whereEqualTo("genre", book.getCategories())
-//                .whereEqualTo("isbn10", book.getIsbn10())
-//                .whereEqualTo("isbn13", book.getIsbn13())
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
@@ -472,7 +444,7 @@ public class BookDetailsFragment extends Fragment {
             wantToReadButton.setEnabled(false);
             wantToReadButton.setText("Already Read");
             wantToReadButton.setBackgroundColor(getResources().getColor(R.color.purple_200));
-            removeBookFromList("Want to Read", bookId);
+            removeBookFromList("want_to_read", bookId);
         } else if (inWantToReadList) {
             wantToReadButton.setEnabled(false);
             wantToReadButton.setText("Want to Read ✔");
@@ -486,25 +458,44 @@ public class BookDetailsFragment extends Fragment {
 
     private void removeBookFromList(String listName, String bookId) {
         db.collection("lists")
-                .whereEqualTo("userID", mAuth.getUid())
-                .whereEqualTo("name", listName)
+                .document(mAuth.getUid())
+                .collection(listName)
+                .whereEqualTo("bookId", bookId)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        if (!task.getResult().isEmpty()) {
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                DocumentReference listRef = document.getReference();
-                                listRef.update("books", FieldValue.arrayRemove(bookId))
-                                        .addOnSuccessListener(aVoid -> {
-                                            Log.d("BookDetailsFragment", "Book removed from " + listName + " list");
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            Log.w("BookDetailsFragment", "Error updating document", e);
-                                        });
-                            }
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            document.getReference().delete()
+                                    .addOnSuccessListener(aVoid -> Log.d("BookDetailsFragment", "Book removed from " + listName))
+                                    .addOnFailureListener(e -> Log.w("BookDetailsFragment", "Error deleting document", e));
                         }
                     } else {
                         Log.d("BookDetailsFragment", "Error getting documents: ", task.getException());
+                    }
+                });
+    }
+    private void checkBookInList(String listName, String bookId, OnCheckBookInListListener listener) {
+        Log.d("BookDetailsFragment", "Checking if the book already exists in book list:" + listName);
+
+        db.collection("lists")
+                .document(mAuth.getUid())
+                .collection(listName)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            String docBookId = document.getString("bookId");
+                            if (docBookId != null && docBookId.equals(bookId)) {
+                                listener.onCheckBookInList(true);
+                                Log.d("BookDetailsFragment", "True for " + bookId + " in " + listName);
+                                return;
+                            }
+                        }
+                        listener.onCheckBookInList(false);
+                        Log.d("BookDetailsFragment", "False for " + bookId);
+                    } else {
+                        listener.onCheckBookInList(false);
+                        Log.d("BookDetailsFragment", "False for " + bookId);
                     }
                 });
     }
@@ -694,10 +685,6 @@ public class BookDetailsFragment extends Fragment {
     }
 
     private void refreshFragment() {
-//        getFragmentManager().beginTransaction()
-//                .detach(this)
-//                .attach(this)
-//                .commit();
         FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
         transaction.replace(R.id.frame_layout, new BookDetailsFragment(book));
         transaction.addToBackStack(null);
