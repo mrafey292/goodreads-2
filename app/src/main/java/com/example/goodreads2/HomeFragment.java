@@ -22,6 +22,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.android.volley.DefaultRetryPolicy;
+
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -70,14 +72,11 @@ public class HomeFragment extends Fragment implements BookAdapter.OnBookClickLis
         recommendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                deleteRecommendation();
-//                recyclerViewBooks.setVisibility(View.GONE);
-                getNewRecommendations();
-                fetchRecommendedBooks();
+                getNewRecommendationsFromAPI();
+//                deleteRecommendation();
+////                recyclerViewBooks.setVisibility(View.GONE);
+//                getNewRecommendations();
 //                fetchRecommendedBooks();
-//                fetchBooksFromFirestore();
-//                recyclerViewBooks.setVisibility(View.VISIBLE);
-
 
             }
         });
@@ -89,15 +88,7 @@ public class HomeFragment extends Fragment implements BookAdapter.OnBookClickLis
         recyclerViewBooks = view.findViewById(R.id.recyclerViewBooks);
         recyclerViewBooks.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         recommendedBooks = new ArrayList<>();
-//        bookAdapter = new BookAdapter(getContext(), recommendedBooks, new BookAdapter.OnBookClickListener() {
-//            @Override
-//            public void onBookClick(int position, List<Book> bookList) {
-//                // Handle book item click
-//                Book clickedBook = bookList.get(position);
-//                BookDetailsFragment bookDetailsFragment = new BookDetailsFragment(clickedBook);
-//
-//            }
-//        });
+
         bookAdapter = new BookAdapter(getContext(), recommendedBooks, this);
         recyclerViewBooks.setAdapter(bookAdapter);
         fetchRecommendedBooks();
@@ -302,200 +293,6 @@ public class HomeFragment extends Fragment implements BookAdapter.OnBookClickLis
         requestQueue.add(request);
     }
 
-
-//    private void fetchRecommendedBooks() {
-//        firestore.collection("recommendations")
-//                .whereEqualTo("userID", mAuth.getUid())
-//                .get()
-//                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-//                    @Override
-//                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-//                        if (task.isSuccessful() && task.getResult() != null) {
-//                            for (DocumentSnapshot doc : task.getResult()) {
-//                                List<String> bookIds = (List<String>) doc.get("bookIDs");
-//                                if (bookIds != null) {
-//                                    fetchBooksByIds(bookIds);
-//                                }
-//                            }
-//                        } else {
-//                            Toast.makeText(getContext(), "Error fetching recommendations", Toast.LENGTH_SHORT).show();
-//                        }
-//                    }
-//                });
-//    }
-
-//    private void fetchBooksByIds(List<String> bookIds) {
-//        for (String bookId : bookIds) {
-//            firestore.collection("books")
-//                    .document(bookId)
-//                    .get()
-//                    .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-//                        @Override
-//                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-//                            if (task.isSuccessful() && task.getResult() != null) {
-//                                DocumentSnapshot document = task.getResult();
-//                                Book book = document.toObject(Book.class);
-////                                Book book = new Book();
-//                                String coverURL = document.getString("coverImageUrl");
-//                                String title = document.getString("title");
-//                                String description = document.getString("description");
-//                                String isbn10 = document.getString("isbn10");
-//                                String isbn13 = document.getString("isbn13");
-//                                book.setCoverURL(coverURL);
-//                                book.setDescription(description);
-//                                book.setTitle(title);
-//                                book.setIsbn10(isbn10);
-//                                book.setIsbn13(isbn13);
-//
-//                                book.setBookID(bookId);
-//                                Log.d("RECOMMENDATION", bookId+" URL: "+coverURL);
-////                                book.setCoverURL(document.getString("coverURL"));
-//
-//
-//                                if (book != null) {
-//                                    recommendedBooks.add(book);
-//                                    bookAdapter.notifyDataSetChanged();
-//                                }
-//                            } else {
-//                                Toast.makeText(getContext(), "Error fetching book details", Toast.LENGTH_SHORT).show();
-//                            }
-//                        }
-//                    });
-//        }
-//    }
-//    private void fetchBooksFromFirestore() {
-//        firestore.collection("lists")
-//                .whereEqualTo("name", "Read")
-//                .whereEqualTo("userID", mAuth.getUid())
-//                .get()
-//                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-//                    @Override
-//                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-//                        if (task.isSuccessful() && task.getResult() != null) {
-//                            List<String> bookIds = new ArrayList<>();
-//                            for (DocumentSnapshot document : task.getResult()) {
-//                                List<String> books = (List<String>) document.get("books");
-//                                if (books != null) {
-//                                    bookIds.addAll(books);
-//                                }
-//                            }
-//                            fetchBookTitles(bookIds);
-//                        } else {
-//                            Toast.makeText(getContext(), "Error fetching lists", Toast.LENGTH_SHORT).show();
-//                        }
-//                    }
-//                });
-//    }
-//
-//    private void fetchBookTitles(List<String> bookIds) {
-//        List<String> bookTitles = new ArrayList<>();
-//        for (String bookId : bookIds) {
-//            firestore.collection("books").document(bookId)
-//                    .get()
-//                    .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-//                        @Override
-//                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-//                            if (task.isSuccessful() && task.getResult() != null) {
-//                                String bookTitle = task.getResult().getString("author");
-//                                if (bookTitle != null) {
-//                                    bookTitles.add(bookTitle);
-//                                }
-//                                // Check if we have processed all books
-//                                if (bookTitles.size() == bookIds.size()) {
-//                                    fetchRecommendations(bookTitles);
-//                                }
-//                            } else {
-//                                Toast.makeText(getContext(), "Error fetching book details", Toast.LENGTH_SHORT).show();
-//                            }
-//                        }
-//                    });
-//        }
-//    }
-//
-//    private void fetchRecommendations(List<String> bookTitles) {
-//        String url = "https://www.googleapis.com/books/v1/volumes?q=" + android.text.TextUtils.join(",", bookTitles);
-//        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
-//                new Response.Listener<JSONObject>() {
-//                    @Override
-//                    public void onResponse(JSONObject response) {
-//                        try {
-//                            JSONArray items = response.getJSONArray("items");
-//                            List<Map<String, Object>> newBooks = new ArrayList<>();
-//
-//                            for (int i = 0; i < items.length(); i++) {
-//                                JSONObject item = items.getJSONObject(i);
-//                                JSONObject volumeInfo = item.getJSONObject("volumeInfo");
-//
-//                                String title = volumeInfo.optString("title");
-//                                String authors = volumeInfo.optJSONArray("authors") != null ? volumeInfo.optJSONArray("authors").join(", ") : "Unknown Author";
-//                                String description = volumeInfo.optString("description", "No description available");
-//
-//                                // Extract the image URL
-//                                JSONObject imageLinks = volumeInfo.optJSONObject("imageLinks");
-//                                String coverURL = null;
-//                                if (imageLinks != null) {
-//                                    coverURL = imageLinks.optString("thumbnail");
-//                                }
-//
-//                                // Check if coverURL is null
-//                                if (coverURL == null) {
-//                                    coverURL = "https://covers.openlibrary.org/b/id/12547191-L.jpg";
-//                                }
-//
-//                                // Extract genres
-//                                JSONArray categories = volumeInfo.optJSONArray("categories");
-//                                ArrayList<String> genres = new ArrayList<>();
-//                                if (categories != null) {
-//                                    for (int x = 0; x < categories.length(); x++) {
-//                                        genres.add(categories.get(x).toString());
-//                                    }
-//                                }
-//
-//                                // Extract ISBNs
-//                                JSONArray identifiers = volumeInfo.optJSONArray("industryIdentifiers");
-//                                String isbn10 = null;
-//                                String isbn13 = null;
-//
-//                                if (identifiers != null) {
-//                                    for (int j = 0; j < identifiers.length(); j++) {
-//                                        JSONObject identifier = identifiers.getJSONObject(j);
-//                                        String type = identifier.optString("type");
-//                                        String value = identifier.optString("identifier");
-//
-//                                        if ("ISBN_10".equals(type)) {
-//                                            isbn10 = value;
-//                                        } else if ("ISBN_13".equals(type)) {
-//                                            isbn13 = value;
-//                                        }
-//                                    }
-//                                }
-//
-//                                Map<String, Object> bookData = new HashMap<>();
-//                                bookData.put("title", title);
-//                                bookData.put("author", authors);
-//                                bookData.put("description", description);
-//                                bookData.put("coverImageUrl", coverURL);
-//                                bookData.put("genre", genres);
-//                                bookData.put("isbn10", isbn10);
-//                                bookData.put("isbn13", isbn13);
-//
-//                                newBooks.add(bookData);
-//                            }
-//                            checkAndAddBooksToFirestore(newBooks);
-//                        } catch (JSONException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                }, new Response.ErrorListener() {
-//            @Override
-//            public void onErrorResponse(VolleyError error) {
-//                error.printStackTrace();
-//            }
-//        });
-//
-//        requestQueue.add(request);
-//    }
-
     private void deleteRecommendation() {
         String userId = mAuth.getUid();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -560,26 +357,6 @@ public class HomeFragment extends Fragment implements BookAdapter.OnBookClickLis
                         }
                     }
                 });
-//        //REMOVE BOOK FROM BOOKS
-//        for (String bookID: bookIDs[0]){
-//            db.collection("books")
-//                    .document(bookID)
-//                    .delete()
-//                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-//                        @Override
-//                        public void onSuccess(Void unused) {
-//                            Log.e("RECOMMENDATIONS", bookID + " removed from books");
-//                        }
-//                    })
-//                    .addOnFailureListener(new OnFailureListener() {
-//                        @Override
-//                        public void onFailure(@NonNull Exception e) {
-//                            Log.e("RECOMMENDATIONS", bookID + " failed to remove from books");
-//                        }
-//                    });
-//
-//
-//        }
     }
     private void checkAndAddBooksToFirestore(List<Map<String, Object>> newBooks) {
         firestore.collection("books").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
@@ -728,11 +505,66 @@ public class HomeFragment extends Fragment implements BookAdapter.OnBookClickLis
         requestQueue.add(request);
     }
 
+
+    private void getNewRecommendationsFromAPI() {
+        // Get the current user ID
+        String userId = mAuth.getUid();
+        if (userId == null) {
+            Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // API endpoint
+        String url = "http://192.168.1.10:5000/recommend";
+
+        // Create the JSON body with the userID
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("userID", userId);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        // Send the POST request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.POST,
+                url,
+                jsonObject,
+                response -> {
+                    // Handle the response
+                    try {
+                        JSONArray recommendations = response.getJSONArray("recommendations");
+                        Log.d("API Response", recommendations.toString());
+
+                        // Clear old recommendations and fetch the updated ones from Firestore
+//                        deleteRecommendation();
+                        fetchRecommendedBooks();
+                        Toast.makeText(getContext(), "Recommendations updated successfully!", Toast.LENGTH_SHORT).show();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        Toast.makeText(getContext(), "Error parsing response", Toast.LENGTH_SHORT).show();
+                    }
+                },
+                error -> {
+                    Log.e("API Error", error.toString());
+                    Toast.makeText(getContext(), "Error connecting to server", Toast.LENGTH_SHORT).show();
+                }
+        );
+
+        // Set custom timeout (30 seconds)
+        jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
+                100000,  // Timeout duration in milliseconds (30 seconds)
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        ));
+
+        // Add the request to the queue
+        requestQueue.add(jsonObjectRequest);
+    }
+
+
     private void refreshFragment() {
-//        getFragmentManager().beginTransaction()
-//                .detach(this)
-//                .attach(this)
-//                .commit();
         FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
         transaction.replace(R.id.frame_layout, new HomeFragment());
         transaction.addToBackStack(null);
