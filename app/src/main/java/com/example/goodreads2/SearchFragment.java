@@ -121,7 +121,7 @@ public class SearchFragment extends Fragment {
                                     }
                                 }
                                 Log.d("SearchFragment", "Adding book: " + bookId);
-                                bookList.add(new Book(bookId,coverURL, title, authors, description, isbn10, isbn13, genres));
+                                bookList.add(new Book(bookId ,coverURL, title, authors, description, isbn10, isbn13, genres));
                             }
                             searchAdapter.notifyDataSetChanged();
                         } catch (JSONException e) {

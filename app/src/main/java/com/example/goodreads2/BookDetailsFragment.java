@@ -333,11 +333,12 @@ public class BookDetailsFragment extends Fragment {
                 bookMap.put("isbn10", book.getIsbn10());
                 bookMap.put("isbn13", book.getIsbn13());
 
+                // Use the bookID as the document ID
                 db.collection("books")
-                        .add(bookMap)
-                        .addOnSuccessListener(documentReference -> {
-                            bookId = documentReference.getId();
-                            book.setBookID(bookId);
+                        .document(book.getBookID())  // Set the document ID here
+                        .set(bookMap)  // Use set() to create/update the document
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("BookDetailsFragment", "Book added with ID: " + book.getBookID());
                         })
                         .addOnFailureListener(e -> Log.w("BookDetailsFragment", "Error adding document", e));
             }
