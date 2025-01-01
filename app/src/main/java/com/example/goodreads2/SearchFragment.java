@@ -70,6 +70,7 @@ public class SearchFragment extends Fragment {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
+                            view.findViewById(R.id.progressBar2).setVisibility(View.GONE);
                             JSONArray items = response.getJSONArray("items");
                             bookList.clear();
                             for (int i = 0; i < items.length(); i++) {
@@ -135,7 +136,10 @@ public class SearchFragment extends Fragment {
             }
         });
 
+
+
         requestQueue.add(request);
+        view.findViewById(R.id.progressBar2).setVisibility(View.VISIBLE);
         return view;
     }
 }
