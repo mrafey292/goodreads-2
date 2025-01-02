@@ -72,6 +72,7 @@ public class HomeFragment extends Fragment implements BookAdapter.OnBookClickLis
         recommendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+//                deleteRecommendation();
                 getNewRecommendationsFromAPI();
 //                deleteRecommendation();
 ////                recyclerViewBooks.setVisibility(View.GONE);
@@ -515,7 +516,7 @@ public class HomeFragment extends Fragment implements BookAdapter.OnBookClickLis
         }
 
         // API endpoint
-        String url = "http://192.168.1.10:5000/recommend";
+        String url = "http://10.7.244.23:5000/recommend";
 
         // Create the JSON body with the userID
         JSONObject jsonObject = new JSONObject();
@@ -539,7 +540,7 @@ public class HomeFragment extends Fragment implements BookAdapter.OnBookClickLis
 
                         // Clear old recommendations and fetch the updated ones from Firestore
 //                        deleteRecommendation();
-                        fetchRecommendedBooks();
+//                        fetchRecommendedBooks();
                         Toast.makeText(getContext(), "Recommendations updated successfully!", Toast.LENGTH_SHORT).show();
                     } catch (JSONException e) {
                         e.printStackTrace();
